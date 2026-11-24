@@ -1,0 +1,31 @@
+# fork 专用的账号/云同步 Worker 配置。
+# 刻意不改上游 api/wrangler.toml —— 那是原作者的账号、域名和 D1 库，
+# 改了会在“上游 → fork 定时同步”时产生合并冲突。
+#
+# 部署：bash scripts/deploy-api.sh
+# 首次使用前把 database_id 占位符换成你自己的 D1 库 id（deploy-api.sh 会自动填）。
+
+name = "gracenas-math-api"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# 每周一 00:00 UTC（北京 08:00）发学习周报；DIGEST_DRY_RUN=1 时只算不发。
+[triggers]
+crons = ["0 0 * * 1"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "gracenas-math-sync"
+database_id = "b46a2942-cf30-49d1-b856-0e2ea105ff7b"
+
+[vars]
+# 只允许自己的 Pages 站点调用；预览分支域名用单级通配。
+ALLOWED_ORIGINS = "https://edu.gracesite.top,https://gracenas-cn-math-taxonomy.pages.dev,https://*.gracenas-cn-math-taxonomy.pages.dev"
+# 起步测试用 Resend 的 onboarding@resend.dev（只能发给你注册 Resend 的邮箱）。
+# 正式使用请改成你在 Resend 验证过的域名，例如 知识图谱 <noreply@yourdomain.com>。
+MAIL_FROM = "知识图谱 <noreply@gracesite.top>"
+MAIL_PROVIDER = "resend"
+# 生产必须是 "0"；"1" 会把验证码明文写进 Worker 日志，只准调试。
+MAIL_DRY_RUN = "0"
+# 周报默认只算不发。要真发需同时设 ADMIN_KEY secret 并把这里改成 "0"。
+DIGEST_DRY_RUN = "1"
