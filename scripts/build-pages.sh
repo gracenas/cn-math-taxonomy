@@ -49,6 +49,7 @@ cp "$ROOT/data/topics.json" \
    "$OUT/data/"
 cp -a "$ROOT/data/questions" "$OUT/data/"
 cp -a "$ROOT/data/english" "$OUT/data/"
+cp -a "$ROOT/data/mappings" "$OUT/data/"
 # 过渡期兼容副本：旧页面/外部引用仍可能请求 data/questions.json
 cp "$ROOT/data/questions.json" "$OUT/data/"
 
