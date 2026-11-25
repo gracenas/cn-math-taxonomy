@@ -19,6 +19,8 @@ on:
 
 permissions:
   contents: write
+  # 上游更新可能改到 .github/workflows/ci.yml，推送 workflow 文件需要此权限
+  workflows: write
 
 concurrency:
   group: sync-and-deploy
