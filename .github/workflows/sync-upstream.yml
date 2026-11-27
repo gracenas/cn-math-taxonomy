@@ -19,8 +19,6 @@ on:
 
 permissions:
   contents: write
-  # 上游更新可能改到 .github/workflows/ci.yml，推送 workflow 文件需要此权限
-  workflows: write
 
 concurrency:
   group: sync-and-deploy
@@ -56,7 +54,17 @@ jobs:
             echo "上游无新提交，fork 已是最新"
           else
             # fork 相对上游只新增文件（脚本/workflow/配置），不改上游文件，合并无冲突。
+            # 注意：GITHUB_TOKEN 无权推送 workflow 文件的改动（GitHub 的硬限制，
+            # permissions 里也没有 workflows 这一项），所以合并后先备份 fork 自己的
+            # .github/workflows/，合并完再恢复，保证 push 时 workflow 目录无变化。
+            cp -a .github/workflows /tmp/fork-workflows-backup
             git merge --no-edit upstream/main
+            rm -rf .github/workflows
+            cp -a /tmp/fork-workflows-backup .github/workflows
+            git add -A
+            if ! git diff --cached --quiet; then
+              git commit -m "chore: restore fork workflows after upstream merge"
+            fi
             git push origin main
           fi
 
@@ -66,7 +74,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Build static site
-        # 构建产物 dist/ 含域名与 API 地址替换、4221 个知识点页、sitemap、_headers
+        # 构建产物 dist/ 含域名与 API 地址替换、4221+ 个知识点页、sitemap、_headers
         run: bash scripts/build-pages.sh
 
       - name: Deploy to Cloudflare Pages
