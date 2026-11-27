@@ -79,6 +79,15 @@ let a = fs.readFileSync(account, 'utf8');
 a = a.replace(/var DEFAULT_API = '[^']*';/, 'var DEFAULT_API = ' + JSON.stringify(API_BASE) + ';');
 fs.writeFileSync(account, a);
 
+// 3) Service Worker 版本随部署变化：每次构建换 CACHE 名，activate 时自动清掉旧缓存，
+//    避免用户浏览器一直拿旧的预缓存页面/数据（SW 对 data 是「缓存优先」策略）。
+if (BUILD_VER) {
+  const swPath = path.join(OUT, 'sw.js');
+  let w = fs.readFileSync(swPath, 'utf8');
+  w = w.replace(/var VERSION = '[^']*';/, "var VERSION = 'v-" + BUILD_VER + "';");
+  fs.writeFileSync(swPath, w);
+}
+
 if (!ORIGIN) { console.log('跳过域名替换'); process.exit(0); }
 const HOST = ORIGIN.replace(/^https?:\/\//, '').replace(/\/+$/, '');
 const EXTS = new Set(['.html', '.js', '.mjs', '.xml', '.txt', '.webmanifest', '.json']);
