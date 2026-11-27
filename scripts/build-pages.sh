@@ -59,11 +59,12 @@ node "$ROOT/scripts/gen-kp-pages.mjs" --out "$OUT"
 [[ -f "$ROOT/sitemap.xml" ]] && cp "$ROOT/sitemap.xml" "$OUT/"
 
 # ---- fork 适配：域名、统计、云同步 ----
-ORIGIN="$ORIGIN" OUT="$OUT" API_BASE="${API_BASE:-}" node <<'NODE'
+ORIGIN="$ORIGIN" OUT="$OUT" API_BASE="${API_BASE:-}" BUILD_VER="${GITHUB_SHA:-$(date +%s)}" node <<'NODE'
 const fs = require('node:fs');
 const path = require('node:path');
 const OUT = process.env.OUT;
 const ORIGIN = process.env.ORIGIN;
+const BUILD_VER = (process.env.BUILD_VER || '').slice(0, 12);
 
 // 1) 关闭上游第三方统计上报（否则访问数据会发到别人的 Workers）
 const stats = path.join(OUT, 'assets/stats-config.js');
@@ -93,6 +94,12 @@ function walk(dir) {
     } else if (EXTS.has(path.extname(name))) {
       let t = fs.readFileSync(p, 'utf8');
       const before = t;
+      // 3) 给 HTML 里的 assets 引用加部署版本号，绕过 /assets/* 的 immutable 长缓存
+      if (path.extname(name) === '.html' && BUILD_VER) {
+        t = t.replace(/(src|href)="([^"]*?assets\/[^"?]+\.(?:js|css))"/g, function (m, attr, ref) {
+          return attr + '="' + ref + '?v=' + BUILD_VER + '"';
+        });
+      }
       t = t.split('https://math.pansgo.com').join(ORIGIN)
            .split('http://math.pansgo.com').join(ORIGIN)
            .split('math.pansgo.com').join(HOST);
