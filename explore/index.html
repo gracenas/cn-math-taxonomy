@@ -28,6 +28,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="知识图谱">
 <link rel="stylesheet" href="../assets/pwa.css">
+<link rel="stylesheet" href="../assets/feedback.css">
 </head>
 <body class="page-explore">
 <a class="top-banner" href="https://test.pansgo.com/?from=math-top" target="_blank" rel="noopener">🧠 儿童智商测试</a>
@@ -89,6 +90,10 @@
         </select>
         <select id="fDomain" aria-label="领域"><option value="">全部领域</option></select>
       </div>
+      <div class="edition-row" id="edition-row" hidden>
+        <label for="fEdition">数学册次</label>
+        <select id="fEdition" aria-label="数学册次"><option value="renjiao">人教版</option><option value="hujiao">沪教版</option></select>
+      </div>
       <div id="count" class="count">正在加载…</div>
     </div>
     <div id="list" class="list"><p class="muted" style="padding:12px">正在加载知识点…</p></div>
@@ -139,9 +144,12 @@
 <script src="../assets/vendor/cytoscape.min.js"></script>
 <script src="../assets/vendor/dagre.min.js"></script>
 <script src="../assets/vendor/cytoscape-dagre.js"></script>
+<script src="../assets/children.js"></script>
+<script src="../assets/edition.js"></script>
 <script src="app.js"></script>
 <script src="../assets/stats-config.js"></script>
 <script src="../assets/stats.js"></script>
+<script src="../assets/feedback.js"></script>
 <script src="../assets/pwa.js"></script>
 </body>
 </html>
