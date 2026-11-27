@@ -1,5 +1,8 @@
-# 每天把上游 main 合并进 fork，构建后直传到 Cloudflare Pages（Direct Upload）。
-# 当前 Pages 项目是直传模式、不连 Git，所以这里显式跑 build-pages.sh + pages deploy。
+# 每天从上游拉取最新数据（data/），构建后直传到 Cloudflare Pages（Direct Upload）。
+#
+# 重要：上游已把网站源码迁到私有仓，公开仓只剩数据与数据工具链。
+# 因此这里只同步 data/ 目录，绝不合并上游对源码/脚本/workflow 的删除，
+# 否则会把 fork 里的网站源码删掉导致构建失败。
 #
 # 首次使用（必做）：
 #   1. fork 仓库 Settings > Actions > General 允许 Actions 运行；
@@ -45,27 +48,21 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Merge upstream/main into fork/main
+      - name: Sync data/ from upstream
         run: |
           git remote remove upstream 2>/dev/null || true
           git remote add upstream https://github.com/xiaoyang111222/cn-math-taxonomy.git
           git fetch upstream main --no-tags
-          if git merge-base --is-ancestor upstream/main HEAD; then
-            echo "上游无新提交，fork 已是最新"
-          else
-            # fork 相对上游只新增文件（脚本/workflow/配置），不改上游文件，合并无冲突。
-            # 注意：GITHUB_TOKEN 无权推送 workflow 文件的改动（GitHub 的硬限制，
-            # permissions 里也没有 workflows 这一项），所以合并后先备份 fork 自己的
-            # .github/workflows/，合并完再恢复，保证 push 时 workflow 目录无变化。
-            cp -a .github/workflows /tmp/fork-workflows-backup
-            git merge --no-edit upstream/main
-            rm -rf .github/workflows
-            cp -a /tmp/fork-workflows-backup .github/workflows
-            git add -A
-            if ! git diff --cached --quiet; then
-              git commit -m "chore: restore fork workflows after upstream merge"
-            fi
+          # 只覆盖 data/ 目录：用上游版本替换 fork 的数据，源码/脚本/workflow 保持不动。
+          # git read-tree 只影响 data/ 路径，不会删除 fork 独有的网站源码。
+          git rm -r --cached data -q 2>/dev/null || true
+          git checkout upstream/main -- data
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: sync data/ from upstream $(git rev-parse --short upstream/main)"
             git push origin main
+            echo "数据已更新并推送"
+          else
+            echo "上游数据无变化，跳过提交"
           fi
 
       - name: Setup Node
